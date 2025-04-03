@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,12 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Add custom colors
+				'time-purple': '#4F46E5',
+				'time-light-purple': '#A78BFA',
+				'time-bg': '#F9FAFB',
+				'time-gray': '#6B7280',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
