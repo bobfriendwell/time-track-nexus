@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTimeEntry } from '../contexts/TimeEntryContext';
 import Layout from '../components/Layout';
@@ -368,7 +368,7 @@ const TimeAnalysisPage = () => {
                     <CardTitle>Time Trend</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-80">
+                    <div className="h-80 w-full">
                       <ChartContainer
                         config={{
                           hours: {
@@ -376,10 +376,13 @@ const TimeAnalysisPage = () => {
                             label: "Hours",
                           },
                         }}
+                        className="w-full"
                       >
                         <LineChart
                           data={timeLineData}
-                          margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+                          width="100%"
+                          height={300}
                         >
                           <XAxis 
                             dataKey="date" 
