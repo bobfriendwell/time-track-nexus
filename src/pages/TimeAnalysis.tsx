@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTimeEntry } from '../contexts/TimeEntryContext';
@@ -378,50 +379,50 @@ const TimeAnalysisPage = () => {
                         }}
                         className="w-full"
                       >
-                        <LineChart
-                          data={timeLineData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
-                          width="100%"
-                          height={300}
-                        >
-                          <XAxis 
-                            dataKey="date" 
-                            tickFormatter={(date) => format(new Date(date), 'MM/dd')}
-                            angle={-45}
-                            textAnchor="end"
-                            height={60}
-                          />
-                          <YAxis />
-                          <ChartTooltip
-                            content={({ active, payload }) => {
-                              if (active && payload && payload.length) {
-                                return (
-                                  <div className="rounded-lg border bg-background p-2 shadow-md">
-                                    <div className="grid gap-2">
-                                      <div className="flex items-center gap-2">
-                                        <div className="font-medium">
-                                          {format(new Date(payload[0].payload.date), 'yyyy-MM-dd')}
+                        <ResponsiveContainer width="100%" height={300}>
+                          <LineChart
+                            data={timeLineData}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+                          >
+                            <XAxis 
+                              dataKey="date" 
+                              tickFormatter={(date) => format(new Date(date), 'MM/dd')}
+                              angle={-45}
+                              textAnchor="end"
+                              height={60}
+                            />
+                            <YAxis />
+                            <ChartTooltip
+                              content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                  return (
+                                    <div className="rounded-lg border bg-background p-2 shadow-md">
+                                      <div className="grid gap-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="font-medium">
+                                            {format(new Date(payload[0].payload.date), 'yyyy-MM-dd')}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <div className="h-2 w-2 rounded bg-primary"></div>
+                                          <div>{payload[0].value} hours</div>
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-2">
-                                        <div className="h-2 w-2 rounded bg-primary"></div>
-                                        <div>{payload[0].value} hours</div>
-                                      </div>
                                     </div>
-                                  </div>
-                                )
-                              }
-                              return null
-                            }}
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="hours" 
-                            stroke="#4F46E5" 
-                            strokeWidth={2} 
-                            dot={{ stroke: '#4F46E5', strokeWidth: 2, r: 4 }}
-                          />
-                        </LineChart>
+                                  )
+                                }
+                                return null
+                              }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="hours" 
+                              stroke="#4F46E5" 
+                              strokeWidth={2} 
+                              dot={{ stroke: '#4F46E5', strokeWidth: 2, r: 4 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
                       </ChartContainer>
                     </div>
                   </CardContent>
