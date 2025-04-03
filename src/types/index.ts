@@ -28,3 +28,9 @@ export interface SubCategory {
   id: string;
   name: string;
 }
+
+// Add this new interface for the timeline chart
+export interface TimelineData {
+  date: string;
+  hours: number;
+}

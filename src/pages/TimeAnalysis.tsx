@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTimeEntry } from '../contexts/TimeEntryContext';
@@ -35,8 +34,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TimeEntry } from '../types';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { TimeEntry, TimelineData } from '../types';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 type TimeRange = 'thisWeek' | 'thisMonth' | 'prevWeek' | 'prevMonth' | 'custom';
 type GroupedData = {
@@ -66,8 +66,8 @@ const TimeAnalysisPage = () => {
   const [subCategoryData, setSubCategoryData] = useState<GroupedData[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [totalHours, setTotalHours] = useState(0);
+  const [timeLineData, setTimeLineData] = useState<TimelineData[]>([]);
   
-  // Load time entries based on selected range
   useEffect(() => {
     const loadEntries = () => {
       if (!user) return;
@@ -96,7 +96,6 @@ const TimeAnalysisPage = () => {
             break;
         }
       } else {
-        // Regular users only see their own entries
         switch (timeRange) {
           case 'thisWeek':
             loadedEntries = getWeeklyEntries(user.id);
@@ -136,11 +135,11 @@ const TimeAnalysisPage = () => {
     getCustomRangeEntries
   ]);
   
-  // Process data for visualization
   useEffect(() => {
     if (!entries.length) {
       setMainCategoryData([]);
       setSubCategoryData([]);
+      setTimeLineData([]);
       setTotalHours(0);
       return;
     }
@@ -149,8 +148,9 @@ const TimeAnalysisPage = () => {
     const subCategoryGroups: Record<string, GroupedData> = {};
     let total = 0;
     
+    const dateGroups: Record<string, number> = {};
+    
     entries.forEach(entry => {
-      // Add to main category groups
       if (!mainCategoryGroups[entry.mainCategory]) {
         mainCategoryGroups[entry.mainCategory] = {
           category: entry.mainCategory,
@@ -162,7 +162,6 @@ const TimeAnalysisPage = () => {
       mainCategoryGroups[entry.mainCategory].hours += entry.hours;
       mainCategoryGroups[entry.mainCategory].entries.push(entry);
       
-      // Add to sub category groups
       const subCatKey = `${entry.mainCategory}:${entry.subCategory}`;
       if (!subCategoryGroups[subCatKey]) {
         subCategoryGroups[subCatKey] = {
@@ -175,13 +174,24 @@ const TimeAnalysisPage = () => {
       subCategoryGroups[subCatKey].hours += entry.hours;
       subCategoryGroups[subCatKey].entries.push(entry);
       
+      if (!dateGroups[entry.date]) {
+        dateGroups[entry.date] = 0;
+      }
+      
+      dateGroups[entry.date] += entry.hours;
+      
       total += entry.hours;
     });
     
+    const timelineArray = Object.entries(dateGroups).map(([date, hours]) => ({
+      date,
+      hours
+    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
     setMainCategoryData(Object.values(mainCategoryGroups));
     setSubCategoryData(Object.values(subCategoryGroups));
+    setTimeLineData(timelineArray);
     setTotalHours(total);
-    
   }, [entries]);
   
   const toggleCategory = (category: string) => {
@@ -211,7 +221,6 @@ const TimeAnalysisPage = () => {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Time Analysis</h1>
         
-        {/* Time Range Selector */}
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
@@ -284,7 +293,6 @@ const TimeAnalysisPage = () => {
           </CardContent>
         </Card>
         
-        {/* Summary Section */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Summary for {getRangeTitle()}</CardTitle>
@@ -307,55 +315,115 @@ const TimeAnalysisPage = () => {
               </div>
             </div>
             
-            {/* Charts Section */}
             {entries.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Bar Chart */}
-                <div className="bg-white p-4 rounded-lg border shadow-sm">
-                  <h3 className="text-lg font-medium mb-4">Hours by Category</h3>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={mainCategoryData}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <XAxis dataKey="category" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="hours" fill="#4F46E5" name="Hours" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-                
-                {/* Pie Chart */}
-                <div className="bg-white p-4 rounded-lg border shadow-sm">
-                  <h3 className="text-lg font-medium mb-4">Distribution</h3>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="bg-white p-4 rounded-lg border shadow-sm">
+                    <h3 className="text-lg font-medium mb-4">Hours by Category</h3>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
                           data={mainCategoryData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="hours"
-                          nameKey="category"
-                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                         >
-                          {mainCategoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [`${value} hours`, 'Time Spent']} />
-                      </PieChart>
-                    </ResponsiveContainer>
+                          <XAxis dataKey="category" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="hours" fill="#4F46E5" name="Hours" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-lg border shadow-sm">
+                    <h3 className="text-lg font-medium mb-4">Distribution</h3>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={mainCategoryData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="hours"
+                            nameKey="category"
+                            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                          >
+                            {mainCategoryData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => [`${value} hours`, 'Time Spent']} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle>Time Trend</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <ChartContainer
+                        config={{
+                          hours: {
+                            color: "#4F46E5",
+                            label: "Hours",
+                          },
+                        }}
+                      >
+                        <LineChart
+                          data={timeLineData}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
+                        >
+                          <XAxis 
+                            dataKey="date" 
+                            tickFormatter={(date) => format(new Date(date), 'MM/dd')}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
+                          />
+                          <YAxis />
+                          <ChartTooltip
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="rounded-lg border bg-background p-2 shadow-md">
+                                    <div className="grid gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className="font-medium">
+                                          {format(new Date(payload[0].payload.date), 'yyyy-MM-dd')}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded bg-primary"></div>
+                                        <div>{payload[0].value} hours</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              }
+                              return null
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="hours" 
+                            stroke="#4F46E5" 
+                            strokeWidth={2} 
+                            dot={{ stroke: '#4F46E5', strokeWidth: 2, r: 4 }}
+                          />
+                        </LineChart>
+                      </ChartContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
             ) : (
               <div className="text-center py-12 text-gray-500">
                 <p>No data available for the selected time period.</p>
@@ -364,7 +432,6 @@ const TimeAnalysisPage = () => {
           </CardContent>
         </Card>
         
-        {/* Detailed Breakdown */}
         <Card>
           <CardHeader>
             <CardTitle>Detailed Breakdown</CardTitle>
