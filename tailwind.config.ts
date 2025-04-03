@@ -63,7 +63,19 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Add custom colors
+				// Updated blue theme colors
+				'time-blue': {
+					50: '#e6f1ff',
+					100: '#cce4ff',
+					200: '#99c8ff',
+					300: '#66adff',
+					400: '#3391ff',
+					500: '#0066ff',
+					600: '#0052cc',
+					700: '#003d99',
+					800: '#002966',
+					900: '#001433',
+				},
 				'time-purple': '#4F46E5',
 				'time-light-purple': '#A78BFA',
 				'time-bg': '#F9FAFB',
